@@ -31,19 +31,28 @@ endif()
 if(NOT CONFIG_MODE OR (CONFIG_MODE AND NOT DEPTHAI_SHARED_LIBS))
 
     # BZip2 (for bspatch)
-    find_package(BZip2 ${_QUIET} CONFIG REQUIRED)
+    #find_package(BZip2 ${_QUIET} CONFIG REQUIRED)
+    find_package(BZip2 REQUIRED)
 
     # FP16 for conversions
-    find_package(FP16 ${_QUIET} CONFIG REQUIRED)
+    #find_package(FP16 ${_QUIET} CONFIG REQUIRED)
+    #find_package(FP16 REQUIRED)
+    include(FetchFP16)
 
     # libarchive for firmware packages
-    find_package(archive_static ${_QUIET} CONFIG REQUIRED)
-    find_package(lzma ${_QUIET} CONFIG REQUIRED)
+    #find_package(archive_static ${_QUIET} CONFIG REQUIRED)
+    #find_package(lzma ${_QUIET} CONFIG REQUIRED)
+    find_package(LibArchive REQUIRED)
+    find_package(LibLZMA REQUIRED)
+
+
     # ZLIB for compressing Apps
-    find_package(ZLIB CONFIG REQUIRED)
+    #find_package(ZLIB CONFIG REQUIRED)
+    find_package(ZLIB REQUIRED)    
 
     # spdlog for library and device logging
-    find_package(spdlog ${_QUIET} CONFIG REQUIRED)
+    #find_package(spdlog ${_QUIET} CONFIG REQUIRED)
+    find_package(spdlog REQUIRED)
 
     # Backward
     if(DEPTHAI_ENABLE_BACKWARD)
@@ -63,7 +72,8 @@ find_package(Threads ${_QUIET} REQUIRED)
 find_package(nlohmann_json 3.6.0 ${_QUIET} CONFIG REQUIRED)
 
 # libnop for serialization
-find_package(libnop ${_QUIET} CONFIG REQUIRED)
+include(Fetchlibnop)
+#find_package(libnop ${_QUIET} CONFIG REQUIRED)
 
 # XLink
 if(DEPTHAI_XLINK_LOCAL AND (NOT CONFIG_MODE))

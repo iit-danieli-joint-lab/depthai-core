@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.4) # For Hunter
 
+message("START")
+
 # MSVC variable isn't available before 'project' call
 # Generalize to Win32 platform for now
 if(NOT WIN32)
@@ -46,7 +48,7 @@ if(WIN32)
 endif()
 
 # Create depthai project
-project(depthai VERSION "2.26.0" LANGUAGES CXX C)
+project(depthai VERSION "2.25.1" LANGUAGES CXX C)
 get_directory_property(has_parent PARENT_DIRECTORY)
 if(has_parent)
     set(DEPTHAI_VERSION ${PROJECT_VERSION} PARENT_SCOPE)
@@ -219,7 +221,6 @@ add_library(${TARGET_CORE_NAME}
     src/pipeline/node/DetectionNetwork.cpp
     src/pipeline/node/Script.cpp
     src/pipeline/node/SpatialDetectionNetwork.cpp
-    src/pipeline/node/ImageAlign.cpp
     src/pipeline/node/SystemLogger.cpp
     src/pipeline/node/SpatialLocationCalculator.cpp
     src/pipeline/node/AprilTag.cpp
@@ -231,7 +232,6 @@ add_library(${TARGET_CORE_NAME}
     src/pipeline/node/DetectionParser.cpp
     src/pipeline/node/UVC.cpp
     src/pipeline/node/PointCloud.cpp
-    src/pipeline/node/Cast.cpp
     src/pipeline/datatype/Buffer.cpp
     src/pipeline/datatype/ImgFrame.cpp
     src/pipeline/datatype/EncodedFrame.cpp
@@ -252,7 +252,6 @@ add_library(${TARGET_CORE_NAME}
     src/pipeline/datatype/EdgeDetectorConfig.cpp
     src/pipeline/datatype/TrackedFeatures.cpp
     src/pipeline/datatype/FeatureTrackerConfig.cpp
-    src/pipeline/datatype/ImageAlignConfig.cpp
     src/pipeline/datatype/ToFConfig.cpp
     src/pipeline/datatype/PointCloudConfig.cpp
     src/pipeline/datatype/PointCloudData.cpp
@@ -302,10 +301,10 @@ endif()
 
 # First specify options
 option(DEPTHAI_BUILD_TESTS "Build tests" OFF)
-option(DEPTHAI_BUILD_EXAMPLES "Build examples - Requires OpenCV library to be installed" OFF)
+option(DEPTHAI_BUILD_EXAMPLES "Build examples - Requires OpenCV library to be installed" ON)
 option(DEPTHAI_BUILD_DOCS "Build documentation - requires doxygen to be installed" OFF)
 option(DEPTHAI_OPENCV_SUPPORT "Enable optional OpenCV support" ON)
-option(DEPTHAI_PCL_SUPPORT "Enable optional PCL support" OFF)
+option(DEPTHAI_PCL_SUPPORT "Enable optional PCL support" ON)
 
 
 option(DEPTHAI_BINARIES_RESOURCE_COMPILE "Compile Depthai device side binaries into library" ON)
@@ -451,11 +450,13 @@ target_link_libraries(${TARGET_CORE_NAME}
     PRIVATE
         XLink
         Threads::Threads
-        BZip2::bz2
+        BZip2::BZip2
         FP16::fp16
-        archive_static
+        #FP16
+        #archive_static
+        LibArchive::LibArchive
         spdlog::spdlog
-        ZLIB::zlib
+        ZLIB::ZLIB
 )
 
 # Add compile & CMake definitions
@@ -569,6 +570,10 @@ endif()
 ########################
 # PCL Support
 ########################
+#set(PCL_DIR "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake")
+#find_package(PCL 1.13 REQUIRED)
+#set(CMAKE_LIBRARY_PATH "/home/amelis/mambaforge/envs/luxonis/lib")
+#set(CMAKE_INCLUDE_PATH "/home/amelis/mambaforge/envs/luxonis/include/")
 set(TARGET_PCL_NAME ${PROJECT_NAME}-pcl)
 set(TARGET_PCL_ALIAS pcl)
 if(DEPTHAI_PCL_SUPPORT)
