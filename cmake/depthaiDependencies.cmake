@@ -31,28 +31,41 @@ endif()
 if(NOT CONFIG_MODE OR (CONFIG_MODE AND NOT DEPTHAI_SHARED_LIBS))
 
     # BZip2 (for bspatch)
-    #find_package(BZip2 ${_QUIET} CONFIG REQUIRED)
-    find_package(BZip2 REQUIRED)
+    if(HUNTER_ENABLED)
+        find_package(BZip2 ${_QUIET} CONFIG REQUIRED)
+    else()
+        find_package(BZip2 REQUIRED)
+    endif()
 
     # FP16 for conversions
-    #find_package(FP16 ${_QUIET} CONFIG REQUIRED)
-    #find_package(FP16 REQUIRED)
-    include(FetchFP16)
-
+    if(HUNTER_ENABLED)
+        find_package(FP16 ${_QUIET} CONFIG REQUIRED)
+    else()    
+        include(FetchFP16)
+    endif()
+        
     # libarchive for firmware packages
-    #find_package(archive_static ${_QUIET} CONFIG REQUIRED)
-    #find_package(lzma ${_QUIET} CONFIG REQUIRED)
-    find_package(LibArchive REQUIRED)
-    find_package(LibLZMA REQUIRED)
-
+    if(HUNTER_ENABLED)
+        find_package(archive_static ${_QUIET} CONFIG REQUIRED)
+        find_package(lzma ${_QUIET} CONFIG REQUIRED)
+    else()
+        find_package(LibArchive REQUIRED)
+        find_package(LibLZMA REQUIRED)
+    endif()
 
     # ZLIB for compressing Apps
-    #find_package(ZLIB CONFIG REQUIRED)
-    find_package(ZLIB REQUIRED)    
+    if(HUNTER_ENABLED)
+        find_package(ZLIB CONFIG REQUIRED)
+    else()
+        find_package(ZLIB REQUIRED)    
+    endif()
 
     # spdlog for library and device logging
-    #find_package(spdlog ${_QUIET} CONFIG REQUIRED)
-    find_package(spdlog REQUIRED)
+    if(HUNTER_ENABLED)
+        find_package(spdlog ${_QUIET} CONFIG REQUIRED)
+    else()    
+        find_package(spdlog REQUIRED)
+    endif()
 
     # Backward
     if(DEPTHAI_ENABLE_BACKWARD)
@@ -72,8 +85,11 @@ find_package(Threads ${_QUIET} REQUIRED)
 find_package(nlohmann_json 3.6.0 ${_QUIET} CONFIG REQUIRED)
 
 # libnop for serialization
-include(Fetchlibnop)
-#find_package(libnop ${_QUIET} CONFIG REQUIRED)
+if(HUNTER_ENABLED)
+    find_package(libnop ${_QUIET} CONFIG REQUIRED)
+else()
+    include(Fetchlibnop)
+endif()
 
 # XLink
 if(DEPTHAI_XLINK_LOCAL AND (NOT CONFIG_MODE))
@@ -84,7 +100,11 @@ if(DEPTHAI_XLINK_LOCAL AND (NOT CONFIG_MODE))
     unset(_BUILD_SHARED_LIBS_SAVED)
     list(APPEND targets_to_export XLink)
 else()
-    find_package(XLink ${_QUIET} CONFIG REQUIRED HINTS "${CMAKE_CURRENT_LIST_DIR}/XLink" "${CMAKE_CURRENT_LIST_DIR}/../XLink")
+    if(HUNTER_ENABLED)
+        find_package(XLink ${_QUIET} CONFIG REQUIRED HINTS "${CMAKE_CURRENT_LIST_DIR}/XLink" "${CMAKE_CURRENT_LIST_DIR}/../XLink")
+    else()
+        include(FetchXLink)
+    endif()
 endif()
 
 # OpenCV 4 - (optional, quiet always)

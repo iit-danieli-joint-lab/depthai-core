@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.4) # For Hunter
 
-message("START")
-
 # MSVC variable isn't available before 'project' call
 # Generalize to Win32 platform for now
 if(NOT WIN32)
@@ -301,7 +299,7 @@ endif()
 
 # First specify options
 option(DEPTHAI_BUILD_TESTS "Build tests" OFF)
-option(DEPTHAI_BUILD_EXAMPLES "Build examples - Requires OpenCV library to be installed" ON)
+option(DEPTHAI_BUILD_EXAMPLES "Build examples - Requires OpenCV library to be installed" OFF)
 option(DEPTHAI_BUILD_DOCS "Build documentation - requires doxygen to be installed" OFF)
 option(DEPTHAI_OPENCV_SUPPORT "Enable optional OpenCV support" ON)
 option(DEPTHAI_PCL_SUPPORT "Enable optional PCL support" ON)
@@ -441,7 +439,24 @@ if(DEPTHAI_CLANG_FORMAT)
 endif()
 
 # link libraries
-target_link_libraries(${TARGET_CORE_NAME}
+if(HUNTER_ENABLED)
+    target_link_libraries(${TARGET_CORE_NAME}
+        PUBLIC
+            nlohmann_json::nlohmann_json
+            libnop
+        INTERFACE
+            XLinkPublic
+        PRIVATE
+            XLink
+            Threads::Threads
+            BZip2::bz2
+            FP16::fp16
+            archive_static
+            spdlog::spdlog
+            ZLIB::zlib
+    )
+else()
+    target_link_libraries(${TARGET_CORE_NAME}
     PUBLIC
         nlohmann_json::nlohmann_json
         libnop
@@ -451,14 +466,12 @@ target_link_libraries(${TARGET_CORE_NAME}
         XLink
         Threads::Threads
         BZip2::BZip2
-        FP16::fp16
-        #FP16
-        #archive_static
+        FP16
         LibArchive::LibArchive
         spdlog::spdlog
         ZLIB::ZLIB
-)
-
+    )        
+endif()
 # Add compile & CMake definitions
 set(DEPTHAI_DEVICE_VERSION "${DEPTHAI_DEVICE_SIDE_COMMIT}")
 target_compile_definitions(${TARGET_CORE_NAME}
@@ -570,10 +583,6 @@ endif()
 ########################
 # PCL Support
 ########################
-#set(PCL_DIR "/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake")
-#find_package(PCL 1.13 REQUIRED)
-#set(CMAKE_LIBRARY_PATH "/home/amelis/mambaforge/envs/luxonis/lib")
-#set(CMAKE_INCLUDE_PATH "/home/amelis/mambaforge/envs/luxonis/include/")
 set(TARGET_PCL_NAME ${PROJECT_NAME}-pcl)
 set(TARGET_PCL_ALIAS pcl)
 if(DEPTHAI_PCL_SUPPORT)
@@ -719,7 +728,9 @@ configure_file("cmake/${PROJECT_NAME}Dependencies.cmake" ${PROJECT_NAME}Dependen
 write_basic_package_version_file(${PROJECT_NAME}ConfigVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY AnyNewerVersion)
 
 # Configure config file (one for exporting build directory, one for installation)
-file(RELATIVE_PATH DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "${CMAKE_CURRENT_BINARY_DIR}" "${HUNTER_INSTALL_PREFIX}")
+if(HUNTER_ENABLED)
+    file(RELATIVE_PATH DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "${CMAKE_CURRENT_BINARY_DIR}" "${HUNTER_INSTALL_PREFIX}")
+endif()
 configure_file(cmake/${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake @ONLY)
 
 # Config for installation
