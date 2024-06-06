@@ -111,6 +111,11 @@ else()
     endif()
 endif()
 
+# Add workaround for conda-forge
+if (DEFINED ENV{CONDA_PREFIX})
+  add_definitions(-D__STDC_FORMAT_MACROS)
+endif()
+
 # Force Colored output when using Ninja
 # Global option - affects all targets
 option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)" OFF)
@@ -466,7 +471,7 @@ else()
         XLink
         Threads::Threads
         BZip2::BZip2
-        FP16
+        FP16::fp16
         LibArchive::LibArchive
         spdlog::spdlog
         ZLIB::ZLIB
