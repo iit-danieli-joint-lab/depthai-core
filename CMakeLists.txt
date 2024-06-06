@@ -224,6 +224,7 @@ add_library(${TARGET_CORE_NAME}
     src/pipeline/node/DetectionNetwork.cpp
     src/pipeline/node/Script.cpp
     src/pipeline/node/SpatialDetectionNetwork.cpp
+    src/pipeline/node/ImageAlign.cpp
     src/pipeline/node/SystemLogger.cpp
     src/pipeline/node/SpatialLocationCalculator.cpp
     src/pipeline/node/AprilTag.cpp
@@ -235,6 +236,7 @@ add_library(${TARGET_CORE_NAME}
     src/pipeline/node/DetectionParser.cpp
     src/pipeline/node/UVC.cpp
     src/pipeline/node/PointCloud.cpp
+    src/pipeline/node/Cast.cpp
     src/pipeline/datatype/Buffer.cpp
     src/pipeline/datatype/ImgFrame.cpp
     src/pipeline/datatype/EncodedFrame.cpp
@@ -255,6 +257,7 @@ add_library(${TARGET_CORE_NAME}
     src/pipeline/datatype/EdgeDetectorConfig.cpp
     src/pipeline/datatype/TrackedFeatures.cpp
     src/pipeline/datatype/FeatureTrackerConfig.cpp
+    src/pipeline/datatype/ImageAlignConfig.cpp
     src/pipeline/datatype/ToFConfig.cpp
     src/pipeline/datatype/PointCloudConfig.cpp
     src/pipeline/datatype/PointCloudData.cpp
@@ -303,6 +306,7 @@ else()
 endif()
 
 # First specify options
+option(DEPTHAI_BUILD_PC_IDJL "Build IDJL point cloud example" OFF)
 option(DEPTHAI_BUILD_TESTS "Build tests" OFF)
 option(DEPTHAI_BUILD_EXAMPLES "Build examples - Requires OpenCV library to be installed" OFF)
 option(DEPTHAI_BUILD_DOCS "Build documentation - requires doxygen to be installed" OFF)
@@ -672,6 +676,13 @@ if(DEPTHAI_SANITIZE)
             add_sanitizers(usb-1.0)
         endif()
     endif()
+endif()
+
+########################
+# Add 
+########################
+if (DEPTHAI_BUILD_PC_IDJL)
+    add_subdirectory(PointCloudIDJL)
 endif()
 
 ########################
