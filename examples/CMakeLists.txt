@@ -111,6 +111,7 @@ endfunction()
 # Hunter test data download
 
 # NeuralNetwork node, mobilenet example
+if(FALSE)
 hunter_private_data(
     URL "https://artifacts.luxonis.com/artifactory/luxonis-depthai-data-local/network/mobilenet-ssd_openvino_2021.4_6shave.blob"
     SHA1 "4f4506726e3083981064938a0faaf9af6180d2c6"
@@ -219,7 +220,7 @@ hunter_private_data(
     FILE "normalize_openvino_2021.4_4shave.blob"
     LOCATION normalization_model
 )
-
+endif()
 ## message(STATUS "Location of test1.data: ${test1_data}")
 
 # bootloader

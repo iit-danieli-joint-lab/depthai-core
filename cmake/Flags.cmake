@@ -40,7 +40,8 @@ function(add_default_flags target)
             add_flag(${target} -Werror=non-virtual-dtor) # warn the user if a class with virtual functions has a non-virtual destructor. This helps catch hard to track down memory errors
             add_flag(${target} -Werror=sign-compare)     # warn the user if they compare a signed and unsigned numbers
             add_flag(${target} -Werror=reorder)          # field '$1' will be initialized after field '$2'
-            add_flag(${target} -Werror=switch-enum)      # if switch case is missing - error
+            # This is not compatible with libnop
+            # add_flag(${target} -Werror=switch-enum)      # if switch case is missing - error
         endif()
 
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

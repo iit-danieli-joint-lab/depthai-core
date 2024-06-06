@@ -113,6 +113,11 @@ else()
     endif()
 endif()
 
+# Add workaround for conda-forge
+if (DEFINED ENV{CONDA_PREFIX})
+  add_definitions(-D__STDC_FORMAT_MACROS)
+endif()
+
 # Force Colored output when using Ninja
 # Global option - affects all targets
 option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)" OFF)
@@ -282,6 +287,7 @@ list(APPEND targets_to_export ${TARGET_CORE_NAME})
 # Add default flags to core
 add_default_flags(${TARGET_CORE_NAME})
 
+
 # And clang-tidy and format
 if(DEPTHAI_CLANG_TIDY)
     include(ClangTidy)
@@ -441,6 +447,7 @@ if(DEPTHAI_CLANG_FORMAT)
 endif()
 
 # link libraries
+get_target_property(LIBNOP_INCLUDE_DIRS libnop INTERFACE_INCLUDE_DIRECTORIES)
 target_link_libraries(${TARGET_CORE_NAME}
     PUBLIC
         nlohmann_json::nlohmann_json
@@ -719,12 +726,14 @@ configure_file("cmake/${PROJECT_NAME}Dependencies.cmake" ${PROJECT_NAME}Dependen
 write_basic_package_version_file(${PROJECT_NAME}ConfigVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY AnyNewerVersion)
 
 # Configure config file (one for exporting build directory, one for installation)
-file(RELATIVE_PATH DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "${CMAKE_CURRENT_BINARY_DIR}" "${HUNTER_INSTALL_PREFIX}")
-configure_file(cmake/${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake @ONLY)
+if(DEPTHAI_INSTALL)
+    file(RELATIVE_PATH DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "${CMAKE_CURRENT_BINARY_DIR}" "${HUNTER_INSTALL_PREFIX}")
+    configure_file(cmake/${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake @ONLY)
 
-# Config for installation
-set(DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "./dependencies")
-configure_file(cmake/${PROJECT_NAME}Config.cmake.in _install/${PROJECT_NAME}Config.cmake @ONLY)
+    # Config for installation
+    set(DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "./dependencies")
+    configure_file(cmake/${PROJECT_NAME}Config.cmake.in _install/${PROJECT_NAME}Config.cmake @ONLY)
+endif()
 
 # Modify RPath to point to the cmake/depthai/dependencies/lib
 # note: macOS is APPLE and also UNIX!

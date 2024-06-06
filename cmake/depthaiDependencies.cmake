@@ -84,7 +84,15 @@ if(DEPTHAI_XLINK_LOCAL AND (NOT CONFIG_MODE))
     unset(_BUILD_SHARED_LIBS_SAVED)
     list(APPEND targets_to_export XLink)
 else()
-    find_package(XLink ${_QUIET} CONFIG REQUIRED HINTS "${CMAKE_CURRENT_LIST_DIR}/XLink" "${CMAKE_CURRENT_LIST_DIR}/../XLink")
+    FetchContent_Declare(
+      XLink
+      GIT_REPOSITORY https://github.com/luxonis/XLink
+      GIT_TAG        e9eb1ef38030176ad70cddd3b545d5e6c509f1e1 # release-1.10.0
+    )
+    set(XLINK_ENABLE_LIBUSB ${XLINK_ENABLE_LIBUSB} CACHE BOOL "" FORCE)
+    set(XLINK_LIBUSB_SYSTEM ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(XLink)
+    #find_package(XLink ${_QUIET} CONFIG REQUIRED HINTS "${CMAKE_CURRENT_LIST_DIR}/XLink" "${CMAKE_CURRENT_LIST_DIR}/../XLink")
 endif()
 
 # OpenCV 4 - (optional, quiet always)
