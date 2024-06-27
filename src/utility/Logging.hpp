@@ -10,6 +10,8 @@
 // libraries
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <fmt/ostream.h>
+#include <fmt/chrono.h>
 
 // shared
 #include <depthai-shared/log/LogConstants.hpp>
@@ -20,6 +22,9 @@
 #include <depthai/openvino/OpenVINO.hpp>
 #include <depthai/utility/Path.hpp>
 #include "Environment.hpp"
+
+#include <depthai/common/CameraBoardSocket.hpp>
+#include <depthai-shared/datatype/DatatypeEnum.hpp>
 
 namespace dai {
 
@@ -150,3 +155,19 @@ inline void critical(const T &msg)
 
 
 } // namespace dai
+
+template <>
+struct fmt::formatter<dai::CameraBoardSocket> : ostream_formatter {};
+
+//template <>
+//struct fmt::formatter<std::chrono::microseconds> : ostream_formatter {};
+
+//template <>
+//struct fmt::formatter<dai::DatatypeEnum> : ostream_formatter {};
+
+template <>
+struct fmt::formatter<dai::DatatypeEnum> : fmt::formatter<std::string> {
+    auto format(dai::DatatypeEnum my, format_context& ctx) const -> decltype(ctx.out()) {
+        return fmt::format_to(ctx.out(), "{}", static_cast<int32_t>(my));
+    }
+};

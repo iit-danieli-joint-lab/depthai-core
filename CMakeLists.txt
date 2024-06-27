@@ -309,15 +309,15 @@ if(DEPTHAI_CLANG_TIDY)
     target_clangtidy_setup(${TARGET_CORE_NAME})
 endif()
 
-# Set compiler features (c++14), and disables extensions (g++14)
-set_property(TARGET ${TARGET_CORE_NAME} PROPERTY CXX_STANDARD 14)
+# Set compiler features (c++17), and disables extensions (g++17)
+set_property(TARGET ${TARGET_CORE_NAME} PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${TARGET_CORE_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET ${TARGET_CORE_NAME} PROPERTY CXX_EXTENSIONS OFF)
-# Add interface transitive property (C++14)
+# Add interface transitive property (C++17)
 if(${CMAKE_VERSION} VERSION_LESS "3.8.0")
     target_compile_features(${TARGET_CORE_NAME} INTERFACE cxx_generic_lambdas)
 else()
-    target_compile_features(${TARGET_CORE_NAME} INTERFACE cxx_std_14)
+    target_compile_features(${TARGET_CORE_NAME} INTERFACE cxx_std_17)
 endif()
 
 # First specify options
@@ -465,17 +465,17 @@ endif()
 target_link_libraries(${TARGET_CORE_NAME}
     PUBLIC
         nlohmann_json::nlohmann_json
-        libnop
+        #libnop
     INTERFACE
         XLinkPublic
     PRIVATE
         XLink
         Threads::Threads
-        BZip2::bz2
+        BZip2::BZip2
         FP16::fp16
-        archive_static
+        LibArchive::LibArchive
         spdlog::spdlog
-        ZLIB::zlib
+        ZLIB::ZLIB
         ghcFilesystem::ghc_filesystem
 )
 
@@ -743,7 +743,11 @@ configure_file("cmake/${PROJECT_NAME}Dependencies.cmake" ${PROJECT_NAME}Dependen
 write_basic_package_version_file(${PROJECT_NAME}ConfigVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY AnyNewerVersion)
 
 # Configure config file (one for exporting build directory, one for installation)
-file(RELATIVE_PATH DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "${CMAKE_CURRENT_BINARY_DIR}" "${HUNTER_INSTALL_PREFIX}")
+if(DEFINED HUNTER_INSTALL_PREFIX)
+    file(RELATIVE_PATH DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "${CMAKE_CURRENT_BINARY_DIR}" "${HUNTER_INSTALL_PREFIX}")
+else()
+    file(RELATIVE_PATH DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_INSTALL_PREFIX}")
+endif()
 configure_file(cmake/${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake @ONLY)
 
 # Config for installation
