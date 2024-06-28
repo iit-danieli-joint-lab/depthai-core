@@ -86,11 +86,11 @@ function(dai_add_example example_name example_src enable_test use_pcl)
         else()
             set(depthai_dll_libraries "$<TARGET_RUNTIME_DLLS:${example_name}>")
         endif()
-        add_custom_command(TARGET ${example_name} POST_BUILD COMMAND
-            "$<$<BOOL:${depthai_dll_libraries}>:${CMAKE_COMMAND};-E;copy_if_different;${depthai_dll_libraries};$<TARGET_FILE_DIR:${example_name}>>"
-            COMMAND_EXPAND_LISTS
-            VERBATIM
-        )
+        #add_custom_command(TARGET ${example_name} POST_BUILD COMMAND
+        #    "$<$<BOOL:${depthai_dll_libraries}>:${CMAKE_COMMAND};-E;copy_if_different;${depthai_dll_libraries};$<TARGET_FILE_DIR:${example_name}>>"
+        #    COMMAND_EXPAND_LISTS
+        #    VERBATIM
+        #)
     endif()
 endfunction()
 
@@ -226,7 +226,7 @@ hunter_private_data(
 dai_add_example(bootloader_version bootloader/bootloader_version.cpp ON OFF)
 dai_add_example(flash_bootloader bootloader/flash_bootloader.cpp OFF OFF)
 dai_add_example(flash_user_bootloader bootloader/flash_user_bootloader.cpp OFF OFF)
-dai_add_example(bootloader_config bootloader/bootloader_config.cpp ON OFF read)
+#dai_add_example(bootloader_config bootloader/bootloader_config.cpp ON OFF read)
 dai_add_example(poe_set_ip bootloader/poe_set_ip.cpp OFF OFF)
 dai_add_example(read_flash_memory bootloader/read_flash_memory.cpp OFF OFF)
 dai_add_example(write_flash_memory bootloader/write_flash_memory.cpp OFF OFF)
@@ -237,7 +237,7 @@ dai_add_example(calibration_flash calibration/calibration_flash.cpp OFF OFF)
 dai_add_example(calibration_flash_version5 calibration/calibration_flash_v5.cpp OFF OFF)
 dai_add_example(calibration_load calibration/calibration_load.cpp ON OFF)
 dai_add_example(calibration_reader calibration/calibration_reader.cpp ON OFF)
-dai_add_example(calibration_dump calibration/calibration_dump.cpp ON OFF)
+#dai_add_example(calibration_dump calibration/calibration_dump.cpp ON OFF)
 dai_add_example(calibration_factory_reset calibration/calibration_factory_reset.cpp OFF OFF)
 
 target_compile_definitions(calibration_flash PRIVATE CALIB_PATH="${calib_v6}")
