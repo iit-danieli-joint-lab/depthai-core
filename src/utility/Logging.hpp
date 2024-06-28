@@ -10,6 +10,8 @@
 // libraries
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/fmt/ostr.h>
+#include <spdlog/fmt/chrono.h>
 
 // shared
 #include <depthai-shared/log/LogConstants.hpp>
@@ -17,6 +19,8 @@
 // project
 #include <depthai/device/Device.hpp>
 #include <depthai/device/DeviceBootloader.hpp>
+#include <depthai/common/CameraBoardSocket.hpp>
+#include <depthai-shared/datatype/DatatypeEnum.hpp>
 #include <depthai/openvino/OpenVINO.hpp>
 #include <depthai/utility/Path.hpp>
 #include "Environment.hpp"
@@ -150,3 +154,17 @@ inline void critical(const T &msg)
 
 
 } // namespace dai
+
+// Support for fmt >= 10.0
+
+#if FMT_VERSION >= 100000
+template <>
+struct fmt::formatter<dai::CameraBoardSocket> : ostream_formatter {};
+
+template <>
+struct fmt::formatter<dai::DatatypeEnum> : fmt::formatter<std::string> {
+    auto format(dai::DatatypeEnum my, format_context& ctx) const -> decltype(ctx.out()) {
+        return fmt::format_to(ctx.out(), "{}", static_cast<int32_t>(my));
+    }
+};
+#endif
