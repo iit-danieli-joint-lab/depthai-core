@@ -54,11 +54,6 @@ int main() {
             continue;
         }
 
-        auto frame = depthImg->getCvFrame();
-        frame.convertTo(frame, CV_8UC1, 255 / depth->initialConfig.getMaxDisparity());
-        cv::imshow("depth", frame);
-        cv::waitKey(1);
-
         if(pclMsg->getPoints().empty()) {
             std::cout << "Empty point cloud" << std::endl;
             continue;
@@ -80,6 +75,12 @@ int main() {
         }
 
         viewer->spinOnce(10);
+
+        auto frame = depthImg->getCvFrame();
+        frame.convertTo(frame, CV_8UC1, 255 / depth->initialConfig.getMaxDisparity());
+        cv::imshow("depth", frame);
+        cv::waitKey(1);
+
 
         if(viewer->wasStopped()) {
             break;
