@@ -25,22 +25,57 @@ else()
     if(DEPTHAI_PCL_SUPPORT)
         hunter_add_package(jsoncpp)
     endif()
+
+    if(DEPTHAI_ENABLE_CURL)
+        hunter_add_package(CURL)
+        hunter_add_package(cpr)
+    endif()
+    hunter_add_package(ghc_filesystem)
 endif()
 
 # If library was build as static, find all dependencies
 if(NOT CONFIG_MODE OR (CONFIG_MODE AND NOT DEPTHAI_SHARED_LIBS))
 
-    # BZip2 (for bspatch)
-    find_package(BZip2 ${_QUIET} CONFIG REQUIRED)
-
     # FP16 for conversions
-    find_package(FP16 ${_QUIET} CONFIG REQUIRED)
+    if(NOT TARGET FP16::fp16)
+        find_package(FP16 ${_QUIET} CONFIG REQUIRED)
+    endif()
 
-    # libarchive for firmware packages
-    find_package(archive_static ${_QUIET} CONFIG REQUIRED)
-    find_package(lzma ${_QUIET} CONFIG REQUIRED)
-    # ZLIB for compressing Apps
-    find_package(ZLIB CONFIG REQUIRED)
+    # Some packages have different package names depending on which
+    # version is installed, if we are using hunter we want to make sure to
+    # use the hunter/luxonis fork, otherwise we try using the hunter/luxonis 
+    # fork and if that can't be found we found the regular version
+    if(DEPTHAI_HUNTER_ENABLED)
+        # BZip2 (for bspatch)
+        find_package(BZip2 ${_QUIET} CONFIG REQUIRED)
+
+        # libarchive for firmware packages
+        find_package(archive_static ${_QUIET} CONFIG REQUIRED)
+        find_package(lzma ${_QUIET} CONFIG REQUIRED)
+
+        # ZLIB for compressing Apps
+        find_package(ZLIB CONFIG REQUIRED)
+    else()
+        # BZip2 (for bspatch)
+        find_package(BZip2 ${_QUIET} CONFIG)
+        if(NOT BZip2_FOUND)
+            find_package(BZip2 ${_QUIET} REQUIRED)
+        endif()
+
+        # libarchive for firmware packages
+        find_package(archive_static ${_QUIET} CONFIG)
+        if(archive_static_FOUND)
+            find_package(lzma ${_QUIET} CONFIG REQUIRED)
+        else()
+            find_package(LibArchive ${_QUIET} REQUIRED)
+        endif()
+
+        # ZLIB for compressing Apps
+        find_package(ZLIB CONFIG)
+        if(NOT ZLIB_FOUND)
+            find_package(ZLIB REQUIRED)
+        endif()
+    endif()
 
     # spdlog for library and device logging
     find_package(spdlog ${_QUIET} CONFIG REQUIRED)
@@ -54,6 +89,12 @@ if(NOT CONFIG_MODE OR (CONFIG_MODE AND NOT DEPTHAI_SHARED_LIBS))
         unset(STACK_DETAILS_AUTO_DETECT)
     endif()
 
+    # Log collection dependencies
+    if(DEPTHAI_ENABLE_CURL)
+        find_package(CURL ${_QUIET} CONFIG REQUIRED)
+        find_package(cpr ${_QUIET} CONFIG REQUIRED)
+    endif()
+    find_package(ghc_filesystem ${_QUIET} CONFIG REQUIRED)
 endif()
 
 # Add threads (c++)
@@ -63,7 +104,10 @@ find_package(Threads ${_QUIET} REQUIRED)
 find_package(nlohmann_json 3.6.0 ${_QUIET} CONFIG REQUIRED)
 
 # libnop for serialization
-find_package(libnop ${_QUIET} CONFIG REQUIRED)
+# Support libnop included via FetchContent
+if(NOT TARGET libnop)
+    find_package(libnop ${_QUIET} CONFIG REQUIRED)
+endif()
 
 # XLink
 if(DEPTHAI_XLINK_LOCAL AND (NOT CONFIG_MODE))
@@ -74,7 +118,10 @@ if(DEPTHAI_XLINK_LOCAL AND (NOT CONFIG_MODE))
     unset(_BUILD_SHARED_LIBS_SAVED)
     list(APPEND targets_to_export XLink)
 else()
-    find_package(XLink ${_QUIET} CONFIG REQUIRED HINTS "${CMAKE_CURRENT_LIST_DIR}/XLink" "${CMAKE_CURRENT_LIST_DIR}/../XLink")
+    # Support XLink included via FetchContent
+    if(NOT TARGET XLink)
+        find_package(XLink ${_QUIET} CONFIG REQUIRED HINTS "${CMAKE_CURRENT_LIST_DIR}/XLink" "${CMAKE_CURRENT_LIST_DIR}/../XLink")
+    endif()
 endif()
 
 # OpenCV 4 - (optional, quiet always)

@@ -9,6 +9,15 @@ endif()
 # Early options
 option(DEPTHAI_ENABLE_LIBUSB "Enable usage of libusb and interaction with USB devices" ON)
 
+# Set to use native tls for windows before including Hunter (used for Curl)
+if(WIN32)
+    set(DEPTHAI_CURL_USE_SCHANNEL ON)
+    set(DEPTHAI_CURL_USE_OPENSSL OFF)
+else()
+    set(DEPTHAI_CURL_USE_SCHANNEL OFF)
+    set(DEPTHAI_CURL_USE_OPENSSL ON)
+endif()
+
 # Set type to canonicalize relative paths for user-provided toolchain
 set(CMAKE_TOOLCHAIN_FILE "" CACHE FILEPATH "CMake toolchain path")
 
@@ -35,8 +44,8 @@ endif()
 
 include("cmake/HunterGate.cmake")
 HunterGate(
-    URL "https://github.com/cpp-pm/hunter/archive/v0.23.322.tar.gz"
-    SHA1 "cb0ea1f74f4a2c49a807de34885743495fccccbe"
+    URL "https://github.com/cpp-pm/hunter/archive/9d9242b60d5236269f894efd3ddd60a9ca83dd7f.tar.gz"
+    SHA1 "16cc954aa723bccd16ea45fc91a858d0c5246376"
     LOCAL # Local config for dependencies
 )
 
@@ -46,7 +55,7 @@ if(WIN32)
 endif()
 
 # Create depthai project
-project(depthai VERSION "2.26.0" LANGUAGES CXX C)
+project(depthai VERSION "2.27.0" LANGUAGES CXX C)
 get_directory_property(has_parent PARENT_DIRECTORY)
 if(has_parent)
     set(DEPTHAI_VERSION ${PROJECT_VERSION} PARENT_SCOPE)
@@ -111,6 +120,16 @@ else()
     endif()
 endif()
 
+# Check if on 32 bit linux - default without CURL support
+if(CMAKE_SIZEOF_VOID_P EQUAL 4 AND UNIX)
+    set(DEPTHAI_DEFAULT_CURL_SUPPORT OFF)
+else()
+    set(DEPTHAI_DEFAULT_CURL_SUPPORT ON)
+endif()
+
+option(DEPTHAI_ENABLE_CURL "Enable CURL support" ${DEPTHAI_DEFAULT_CURL_SUPPORT})
+message(STATUS "CURL support: ${DEPTHAI_ENABLE_CURL}")
+
 # Force Colored output when using Ninja
 # Global option - affects all targets
 option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)" OFF)
@@ -167,6 +186,8 @@ endif()
 
 # Include project dependencies
 set(DEPTHAI_DEPENDENCY_INCLUDE "" CACHE FILEPATH "Optional cmake file to append to dependency processing, e.g. additional find_package()")
+# Set as it is used in depthaiDependencies
+set(DEPTHAI_HUNTER_ENABLED ${HUNTER_ENABLED})
 include(depthaiDependencies)
 
 # Add threads preference
@@ -266,6 +287,7 @@ add_library(${TARGET_CORE_NAME}
     src/utility/XLinkGlobalProfilingLogger.cpp
     src/utility/Logging.cpp
     src/utility/EepromDataParser.cpp
+    src/utility/LogCollection.cpp
     src/xlink/XLinkConnection.cpp
     src/xlink/XLinkStream.cpp
     src/openvino/OpenVINO.cpp
@@ -441,6 +463,32 @@ if(DEPTHAI_CLANG_FORMAT)
     target_clangformat_setup(${TARGET_CORE_NAME} "${header_dirs}")
 endif()
 
+# Some libraries have target names that change between the hunter/luxonis fork
+# and the upstream version. If HUNTER_ENABLED is ON we want to force the
+# use of the hunter/luxonis fork target, otherwise if HUNTER_ENABLED is OFF we
+# fallback to the upstream target name if the hunter/luxonis fork one is not available
+if(HUNTER_ENABLED)
+    set(DEPTHAI_BZIP2_TARGET "BZip2::bz2")
+    set(DEPTHAI_ARCHIVE_TARGET "archive_static")
+    set(DEPTHAI_ZLIB_TARGET "ZLIB::zlib")
+else()
+    if(TARGET BZip2::bz2)
+        set(DEPTHAI_BZIP2_TARGET "BZip2::bz2")
+    else()
+        set(DEPTHAI_BZIP2_TARGET "BZip2::BZip2")
+    endif()
+    if(TARGET archive_static)
+        set(DEPTHAI_ARCHIVE_TARGET "archive_static")
+    else()
+        set(DEPTHAI_ARCHIVE_TARGET "LibArchive::LibArchive")
+    endif()
+    if(TARGET ZLIB::zlib)
+        set(DEPTHAI_ZLIB_TARGET "ZLIB::zlib")
+    else()
+        set(DEPTHAI_ZLIB_TARGET "ZLIB::ZLIB")
+    endif()
+endif()
+
 # link libraries
 target_link_libraries(${TARGET_CORE_NAME}
     PUBLIC
@@ -451,12 +499,21 @@ target_link_libraries(${TARGET_CORE_NAME}
     PRIVATE
         XLink
         Threads::Threads
-        BZip2::bz2
+        ${DEPTHAI_BZIP2_TARGET}
         FP16::fp16
-        archive_static
+        ${DEPTHAI_ARCHIVE_TARGET}
         spdlog::spdlog
-        ZLIB::zlib
+        ${DEPTHAI_ZLIB_TARGET}
+        ghcFilesystem::ghc_filesystem
 )
+
+if(DEPTHAI_ENABLE_CURL)
+    target_link_libraries(${TARGET_CORE_NAME} PRIVATE
+        CURL::libcurl
+        cpr::cpr
+    )
+    target_compile_definitions(${TARGET_CORE_NAME} PRIVATE DEPTHAI_ENABLE_CURL)
+endif()
 
 # Add compile & CMake definitions
 set(DEPTHAI_DEVICE_VERSION "${DEPTHAI_DEVICE_SIDE_COMMIT}")
@@ -495,7 +552,11 @@ macro(add_runtime_dependencies depending_target dependency)
                 set(dlls ${depthai_dll_libraries} $<$<CONFIG:${cfg}>:${dll}>)
             endforeach()
         endif()
-        file(GLOB depthai_dll_libraries "${HUNTER_INSTALL_PREFIX}/bin/*.dll")
+        if(HUNTER_ENABLED)
+            file(GLOB depthai_dll_libraries "${HUNTER_INSTALL_PREFIX}/bin/*.dll")
+        else()
+            set(depthai_dll_libraries "")
+        endif()
         # Create a list of required dll files
         set(required_dll_files ${dlls} ${depthai_dll_libraries})
         # Copy the required dlls
@@ -655,6 +716,50 @@ if(DEPTHAI_SANITIZE)
     endif()
 endif()
 
+# Support use of hunter_private_data (used by tests and examples) even if HUNTER_ENABLED is OFF
+if(NOT HUNTER_ENABLED)
+    if(NOT COMMAND hunter_private_data)
+        function(hunter_private_data)    
+            set(one URL SHA1 CREDENTIALS LOCATION FILE)
+            set(multiple HTTPHEADER)
+    
+            cmake_parse_arguments(x "" "${one}" "${multiple}" "${ARGN}")
+    
+            if(x_HTTPHEADER)
+                message(FATAL_ERROR "HTTPHEADER argument of hunter_private_data not supported if HUNTER_ENABLED is OFF")
+            endif()
+            if(x_CREDENTIALS)
+                message(FATAL_ERROR "CREDENTIALS argument of hunter_private_data not supported if HUNTER_ENABLED is OFF")
+            endif()
+    
+            if(NOT x_URL)
+                message(FATAL_ERROR "URL not provided to hunter_private_data")
+            endif()
+            if(NOT x_SHA1)
+                message(FATAL_ERROR "SHA1 not provided to hunter_private_data")
+            endif()
+            if(NOT x_FILE)
+                message(FATAL_ERROR "FILE not provided to hunter_private_data")
+            endif()
+            if(NOT x_LOCATION)
+                message(FATAL_ERROR "LOCATION not provided to hunter_private_data")
+            endif()
+    
+            set(x_DOWNLOAD_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/_hunter_private_data/${x_FILE}")
+    
+            file(DOWNLOAD
+                ${x_URL}
+                ${x_DOWNLOAD_LOCATION}
+                EXPECTED_HASH SHA1=${x_SHA1}
+                TLS_VERIFY ON
+            )
+    
+            # Set the output variable
+            set(${x_LOCATION} "${x_DOWNLOAD_LOCATION}" PARENT_SCOPE)
+        endfunction()
+    endif()
+endif()
+
 ########################
 # Testing infrastructure
 ########################
@@ -714,7 +819,9 @@ configure_file("cmake/${PROJECT_NAME}Dependencies.cmake" ${PROJECT_NAME}Dependen
 write_basic_package_version_file(${PROJECT_NAME}ConfigVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY AnyNewerVersion)
 
 # Configure config file (one for exporting build directory, one for installation)
-file(RELATIVE_PATH DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "${CMAKE_CURRENT_BINARY_DIR}" "${HUNTER_INSTALL_PREFIX}")
+if(HUNTER_ENABLED)
+    file(RELATIVE_PATH DEPTHAI_DEPENDENCIES_INSTALLATION_PATH_REL "${CMAKE_CURRENT_BINARY_DIR}" "${HUNTER_INSTALL_PREFIX}")
+endif()
 configure_file(cmake/${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake @ONLY)
 
 # Config for installation
@@ -753,8 +860,10 @@ if(DEPTHAI_INSTALL)
     install(DIRECTORY "${DEPTHAI_SHARED_3RDPARTY_INCLUDE}/" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${DEPTHAI_SHARED_3RDPARTY_HEADERS_PATH}")
     # Install depthai-bootloader-shared public headers
     install(DIRECTORY "${DEPTHAI_BOOTLOADER_SHARED_PUBLIC_INCLUDE}/" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-    # Install Hunter dependencies
-    install(DIRECTORY "${HUNTER_INSTALL_PREFIX}/" DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/dependencies")
+    if(HUNTER_ENABLED)
+        # Install Hunter dependencies
+        install(DIRECTORY "${HUNTER_INSTALL_PREFIX}/" DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/dependencies")
+    endif()
     # Install resources if not RC'd
     if(NOT DEPTHAI_BINARIES_RESOURCE_COMPILE)
         install(DIRECTORY "${DEPTHAI_RESOURCES_OUTPUT_DIR}/" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}")
