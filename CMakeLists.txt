@@ -592,8 +592,8 @@ if(DEPTHAI_PCL_SUPPORT)
         # Specify that we are building target pcl
         target_compile_definitions(${TARGET_PCL_NAME} PUBLIC DEPTHAI_TARGET_PCL)
 
-        target_include_directories(${TARGET_PCL_NAME} PUBLIC ${PCL_INCLUDE_DIRS})
-        target_link_directories(${TARGET_PCL_NAME} PUBLIC ${PCL_LIBRARY_DIRS})
+        target_include_directories(${TARGET_PCL_NAME} PRIVATE ${PCL_INCLUDE_DIRS})
+        target_link_directories(${TARGET_PCL_NAME} PRIVATE ${PCL_LIBRARY_DIRS})
         target_compile_definitions(${TARGET_PCL_NAME} PUBLIC ${PCL_DEFINITIONS})
 
         # Add public dependency to depthai::core library
