@@ -719,19 +719,19 @@ endif()
 # Support use of hunter_private_data (used by tests and examples) even if HUNTER_ENABLED is OFF
 if(NOT HUNTER_ENABLED)
     if(NOT COMMAND hunter_private_data)
-        function(hunter_private_data)    
+        function(hunter_private_data)
             set(one URL SHA1 CREDENTIALS LOCATION FILE)
             set(multiple HTTPHEADER)
-    
+
             cmake_parse_arguments(x "" "${one}" "${multiple}" "${ARGN}")
-    
+
             if(x_HTTPHEADER)
                 message(FATAL_ERROR "HTTPHEADER argument of hunter_private_data not supported if HUNTER_ENABLED is OFF")
             endif()
             if(x_CREDENTIALS)
                 message(FATAL_ERROR "CREDENTIALS argument of hunter_private_data not supported if HUNTER_ENABLED is OFF")
             endif()
-    
+
             if(NOT x_URL)
                 message(FATAL_ERROR "URL not provided to hunter_private_data")
             endif()
@@ -744,16 +744,16 @@ if(NOT HUNTER_ENABLED)
             if(NOT x_LOCATION)
                 message(FATAL_ERROR "LOCATION not provided to hunter_private_data")
             endif()
-    
+
             set(x_DOWNLOAD_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/_hunter_private_data/${x_FILE}")
-    
+
             file(DOWNLOAD
                 ${x_URL}
                 ${x_DOWNLOAD_LOCATION}
                 EXPECTED_HASH SHA1=${x_SHA1}
                 TLS_VERIFY ON
             )
-    
+
             # Set the output variable
             set(${x_LOCATION} "${x_DOWNLOAD_LOCATION}" PARENT_SCOPE)
         endfunction()
@@ -810,7 +810,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 # Export targets (capability to import current build directory)
-export(TARGETS ${targets_to_export} NAMESPACE ${PROJECT_NAME}:: FILE "${PROJECT_NAME}Targets.cmake")
+# export(TARGETS ${targets_to_export} NAMESPACE ${PROJECT_NAME}:: FILE "${PROJECT_NAME}Targets.cmake")
 
 # Dependencies file
 configure_file("cmake/${PROJECT_NAME}Dependencies.cmake" ${PROJECT_NAME}Dependencies.cmake COPYONLY)
