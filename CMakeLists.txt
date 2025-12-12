@@ -4,7 +4,7 @@ include(cmake/depthaiOptions.cmake)
 
 if(WIN32)
     add_compile_options(/MP)
-    add_compile_options(/Ob2) # perform more aggresive function inlining to reduce the number of exported symbols, adopted from https://github.com/tensorflow/tensorflow/pull/10962
+    # add_compile_options(/Ob2) # perform more aggresive function inlining to reduce the number of exported symbols, adopted from https://github.com/tensorflow/tensorflow/pull/10962
     set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Postfix for debug libraries" FORCE)
 endif()
 
@@ -766,6 +766,7 @@ target_include_directories(${TARGET_CORE_NAME}
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src>"
         "$<BUILD_INTERFACE:${DEPTHAI_SHARED_INCLUDE}>"
         "$<BUILD_INTERFACE:${DEPTHAI_BOOTLOADER_SHARED_INCLUDE}>"
+        "$<BUILD_INTERFACE:${FP16_INCLUDE_DIR}>"
 )
 
 target_include_directories(${TARGET_CORE_NAME} SYSTEM
@@ -926,12 +927,6 @@ macro(add_runtime_dependencies depending_target dependency)
         message(STATUS "Required dlls for core are: ${required_dll_files}")
     endif()
 endmacro()
-# Add libusb dll in build time
-add_runtime_dependencies(${TARGET_CORE_NAME} usb-1.0)
-# Add dynamic calibration dll in build time
-if(DEPTHAI_DYNAMIC_CALIBRATION_SUPPORT)
-    add_runtime_dependencies(${TARGET_CORE_NAME} dynamic_calibration_imported)
-endif()
 
 ########################
 # OpenCV Support 2
@@ -1242,8 +1237,10 @@ if(NOT BUILD_SHARED_LIBS)
     endif()
 endif()
 
-# Export targets (capability to import current build directory)
-export(TARGETS ${targets_to_export} NAMESPACE ${PROJECT_NAME}:: FILE "${PROJECT_NAME}Targets.cmake")
+if(DEPTHAI_INSTALL)
+    # Export targets (capability to import current build directory)
+    export(TARGETS ${targets_to_export} NAMESPACE ${PROJECT_NAME}:: FILE "${PROJECT_NAME}Targets.cmake")
+endif()
 
 # Dependencies file
 configure_file("cmake/${PROJECT_NAME}Dependencies.cmake" ${PROJECT_NAME}Dependencies.cmake COPYONLY)

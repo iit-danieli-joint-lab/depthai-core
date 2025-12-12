@@ -38,8 +38,9 @@ if(NOT CONFIG_MODE OR (CONFIG_MODE AND NOT DEPTHAI_SHARED_LIBS))
     # BZip2 (for bspatch)
     find_package(BZip2 ${_QUIET}  REQUIRED)
 
-    find_package(lz4 CONFIG REQUIRED)
+    include(Fetchlz4)
     # FP16 for conversions
+    include(FetchFP16)
     find_path(FP16_INCLUDE_DIR NAMES fp16.h)
 
     if(DEPTHAI_ENABLE_KOMPUTE)
@@ -49,7 +50,7 @@ if(NOT CONFIG_MODE OR (CONFIG_MODE AND NOT DEPTHAI_SHARED_LIBS))
     find_package(LibArchive ${_QUIET}  REQUIRED)
     find_package(liblzma ${_QUIET} CONFIG REQUIRED)
     # httplib for Gate communication
-    find_package(httplib ${_QUIET} CONFIG REQUIRED)
+    include(Fetchcpp-httplib)
     # ZLIB for compressing Apps
     find_package(ZLIB REQUIRED)
     find_package(Eigen3 ${_QUIET} CONFIG REQUIRED)
@@ -73,7 +74,7 @@ if(NOT CONFIG_MODE OR (CONFIG_MODE AND NOT DEPTHAI_SHARED_LIBS))
         unset(STACK_DETAILS_AUTO_DETECT)
     endif()
     find_package(yaml-cpp ${_QUIET} CONFIG REQUIRED)
-    find_package(semver ${_QUIET} CONFIG REQUIRED)
+    include(Fetchsemver)
     if(DEPTHAI_HAS_APRIL_TAG)
         find_package(apriltag ${_QUIET} CONFIG REQUIRED)
     endif()
@@ -151,7 +152,7 @@ endif()
 
 if(DEPTHAI_ENABLE_MP4V2)
     # MP4V2 for video encoding
-    find_package(mp4v2 ${_QUIET} CONFIG REQUIRED)
+    include(Fetchmp4v2)
 endif()
 
 if(DEPTHAI_ENABLE_PROTOBUF)

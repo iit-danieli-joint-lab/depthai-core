@@ -42,7 +42,7 @@ class Version::Impl {
          const PreReleaseType& type,
          const std::optional<uint16_t>& preReleaseVersion,
          const std::string& buildInfo)
-        : version(major, minor, patch, convertPreReleaseToSemver(type), preReleaseVersion), buildInfo(buildInfo) {}
+        : version(static_cast<uint8_t>(major), static_cast<uint8_t>(minor), static_cast<uint8_t>(patch), convertPreReleaseToSemver(type), static_cast<uint8_t>(preReleaseVersion.value_or(0))), buildInfo(buildInfo) {}
 
     bool operator==(const Impl& other) const {
         return version == other.version;
