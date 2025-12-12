@@ -15,4 +15,4 @@
 	url = https://github.com/luxonis/pybind11_opencv_numpy.git
 [submodule "3rdparty/ws-protocol"]
 	path = 3rdparty/foxglove/ws-protocol
-	url = https://github.com/luxonis/ws-protocol.git
+	url = https://github.com/iit-danieli-joint-lab/ws-protocol.git
