@@ -48,7 +48,7 @@ if(NOT CONFIG_MODE OR (CONFIG_MODE AND NOT DEPTHAI_SHARED_LIBS))
     endif()
     # libarchive for firmware packages
     find_package(LibArchive ${_QUIET}  REQUIRED)
-    find_package(liblzma ${_QUIET} CONFIG REQUIRED)
+    find_package(liblzma ${_QUIET} REQUIRED)
     # httplib for Gate communication
     include(Fetchcpp-httplib)
     # ZLIB for compressing Apps
